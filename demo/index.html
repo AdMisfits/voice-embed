@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Note Component - iMessage Style</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: #f2f2f7;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .phone-container {
+      max-width: 390px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 40px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .status-bar {
+      background: white;
+      padding: 12px 24px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-bar .time {
+      flex: 1;
+    }
+
+    .status-bar .icons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chat-header {
+      background: white;
+      border-bottom: 1px solid #e5e5ea;
+      padding: 12px 20px;
+      text-align: center;
+    }
+
+    .chat-header h2 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .chat-header .subtitle {
+      font-size: 12px;
+      color: #8e8e93;
+    }
+
+    .messages-container {
+      background: white;
+      min-height: 600px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .message-group.sent {
+      align-items: flex-end;
+    }
+
+    .message-group.received {
+      align-items: flex-start;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 16px;
+      line-height: 1.4;
+      position: relative;
+    }
+
+    .message-group.sent .message {
+      background: #007AFF;
+      color: white;
+    }
+
+    .message-group.received .message {
+      background: #e5e5ea;
+      color: black;
+    }
+
+    .voice-message {
+      padding: 0;
+      background: transparent !important;
+      max-width: none;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #8e8e93;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .demo-controls {
+      max-width: 390px;
+      margin: 40px auto 0;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .demo-controls h3 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #1c1c1e;
+    }
+
+    .demo-controls .control-group {
+      margin-bottom: 16px;
+    }
+
+    .demo-controls label {
+      display: block;
+      font-size: 14px;
+      color: #3c3c43;
+      margin-bottom: 8px;
+    }
+
+    .demo-controls input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d1d6;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .demo-controls button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .demo-controls button:hover {
+      background: #0051d5;
+    }
+
+    .demo-controls button:active {
+      transform: scale(0.98);
+    }
+
+    .info-box {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 20px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #3c3c43;
+    }
+
+    .info-box h4 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #1c1c1e;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-box li {
+      margin-bottom: 4px;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .info-box li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #007AFF;
+    }
+
+    @media (max-width: 480px) {
+      .phone-container {
+        border-radius: 0;
+        box-shadow: none;
+        max-width: 100%;
+      }
+
+      .demo-controls {
+        border-radius: 0;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Simple test container -->
+  <div style="padding: 50px; background: #f2f2f7; min-height: 100vh;">
+    <h1 style="text-align: center; margin-bottom: 50px;">Voice Note Component Demo</h1>
+    
+    <!-- Test voice note component -->
+    <div style="max-width: 300px; margin: 0 auto;">
+      <voice-note src="../sample-1.m4a"></voice-note>
+    </div>
+  </div>
+  
+
+  <script src="../dist/voice-note.min.js" defer></script>
+  <script>
+    let audioUrl = '../sample-1.m4a';
+
+    // Add null check to prevent error if element doesn't exist
+    const audioFileInput = document.getElementById('audio-file');
+    if (audioFileInput) {
+      audioFileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          audioUrl = URL.createObjectURL(file);
+          addReceivedMessage();
+        }
+      });
+    }
+
+    function addSentMessage() {
+      const container = document.querySelector('.messages-container');
+      if (!container) return; // Exit if container doesn't exist
+      
+      const messageGroup = document.createElement('div');
+      messageGroup.className = 'message-group sent';
+      messageGroup.innerHTML = `
+        <div class="message voice-message">
+          <voice-note src="${audioUrl}"></voice-note>
+        </div>
+        <span class="timestamp">${getCurrentTime()}</span>
+      `;
+      container.appendChild(messageGroup);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function addReceivedMessage() {
+      const container = document.querySelector('.messages-container');
+      if (!container) return; // Exit if container doesn't exist
+      
+      const messageGroup = document.createElement('div');
+      messageGroup.className = 'message-group received';
+      messageGroup.innerHTML = `
+        <div class="message voice-message">
+          <voice-note src="${audioUrl}"></voice-note>
+        </div>
+        <span class="timestamp">${getCurrentTime()}</span>
+      `;
+      container.appendChild(messageGroup);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function clearMessages() {
+      const container = document.querySelector('.messages-container');
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+
+    function getCurrentTime() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    // Add event listeners to voice notes if they exist
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('voice-note').forEach(player => {
+        player.addEventListener('vn-play', () => {
+          document.querySelectorAll('voice-note').forEach(other => {
+            if (other !== player && !other.paused) {
+              other.pause();
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
