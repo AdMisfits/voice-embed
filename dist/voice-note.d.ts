@@ -27,6 +27,7 @@ declare class VoiceNoteElement extends HTMLElement {
     private clickedBar;
     private speeds;
     private currentSpeedIndex;
+    private resizeObserver;
     static get observedAttributes(): string[];
     constructor();
     private setupDOM;

@@ -28,6 +28,7 @@ class VoiceNoteElement extends HTMLElement {
   private clickedBar: number | null = null;
   private speeds: number[] = [1, 1.25, 1.5, 2];
   private currentSpeedIndex: number = 0;
+  private resizeObserver: ResizeObserver | null = null;
 
   static get observedAttributes() {
     return ['src'];
@@ -129,8 +130,8 @@ class VoiceNoteElement extends HTMLElement {
         justify-content: center;
         align-items: stretch;
         position: relative;
-        min-width: 120px;
-        max-width: 160px;
+        min-width: 150px;
+        max-width: 200px;
 
       }
 
@@ -292,11 +293,19 @@ class VoiceNoteElement extends HTMLElement {
     this.canvas.addEventListener('click', (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
+      const width = rect.width;
+
+      // Calculate bar index with dynamic spacing
       const barWidth = 2;
-      const barGap = 1;
+      const minGap = 1;
+      const maxBars = Math.floor(width / (barWidth + minGap));
+      const targetBars = 80;
+      const barCount = Math.min(maxBars, targetBars);
+      const barGap = barCount > 1 ? (width - (barCount * barWidth)) / (barCount - 1) : 0;
+
       const barIndex = Math.floor(x / (barWidth + barGap));
       this.clickedBar = barIndex;
-      
+
       const percent = x / rect.width;
       this.seek(this.audio.duration * percent);
       this.drawWaveform();
@@ -305,10 +314,18 @@ class VoiceNoteElement extends HTMLElement {
     this.canvas.addEventListener('mousemove', (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
+      const width = rect.width;
+
+      // Calculate bar index with dynamic spacing
       const barWidth = 2;
-      const barGap = 1;
+      const minGap = 1;
+      const maxBars = Math.floor(width / (barWidth + minGap));
+      const targetBars = 80;
+      const barCount = Math.min(maxBars, targetBars);
+      const barGap = barCount > 1 ? (width - (barCount * barWidth)) / (barCount - 1) : 0;
+
       const barIndex = Math.floor(x / (barWidth + barGap));
-      
+
       if (this.hoveredBar !== barIndex) {
         this.hoveredBar = barIndex;
         this.drawWaveform();
@@ -346,7 +363,7 @@ class VoiceNoteElement extends HTMLElement {
     if (src) {
       this.audio.src = src;
       this.cacheKey = `voice-note-peaks-${src}`;
-      
+
       const cachedPeaks = localStorage.getItem(this.cacheKey);
       if (cachedPeaks) {
         try {
@@ -356,11 +373,17 @@ class VoiceNoteElement extends HTMLElement {
         }
       }
     }
-    
+
     // Set up canvas with proper dimensions
     this.setupCanvasSize();
     this.ctx = this.canvas.getContext('2d');
     this.drawWaveform();
+
+    // Set up ResizeObserver to handle container size changes
+    this.resizeObserver = new ResizeObserver(() => {
+      this.setupCanvasSize();
+    });
+    this.resizeObserver.observe(this.canvas);
   }
 
   private setupCanvasSize() {
@@ -459,41 +482,56 @@ class VoiceNoteElement extends HTMLElement {
 
   private drawWaveform() {
     if (!this.ctx) return;
-    
+
     // Get dimensions and DPR
     const rect = this.canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     const width = rect.width;
     const height = rect.height;
-    const barWidth = 2; // Thinner bars
-    const barGap = 1; // Smaller gap
-    const barCount = Math.floor(width / (barWidth + barGap));
-    
+
+    // Fixed bar width, calculate dynamic spacing
+    const barWidth = 2; // Fixed bar width
+    const minGap = 1; // Minimum gap between bars
+
+    // Calculate maximum number of bars that can fit with minimum gap
+    const maxBars = Math.floor(width / (barWidth + minGap));
+
+    // Use the smaller of maxBars or desired bar count (80)
+    const targetBars = 80;
+    const barCount = Math.min(maxBars, targetBars);
+
+    // Calculate the actual gap to distribute bars evenly across full width
+    // Formula: totalWidth = barCount * barWidth + (barCount - 1) * gap
+    // Solving for gap: gap = (width - barCount * barWidth) / (barCount - 1)
+    const barGap = barCount > 1 ? (width - (barCount * barWidth)) / (barCount - 1) : 0;
+
     // Clear entire canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     if (this.peaks.length === 0) {
       for (let i = 0; i < barCount; i++) {
+        // Calculate precise x position to fill entire width
         const x = i * (barWidth + barGap);
         const barHeight = height * 0.3;
         const y = (height - barHeight) / 2;
-        
+
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         this.drawRoundedBar(x * dpr, y * dpr, barWidth * dpr, barHeight * dpr);
       }
       return;
     }
-    
+
     const peaksToShow = Math.min(barCount, this.peaks.length);
     const playedBars = Math.floor(peaksToShow * this.currentProgress);
-    
+
     for (let i = 0; i < peaksToShow; i++) {
       const peakIndex = Math.floor(i * this.peaks.length / peaksToShow);
       const peak = this.peaks[peakIndex];
+      // Calculate precise x position to fill entire width
       const x = i * (barWidth + barGap);
       const barHeight = Math.max(4, peak * height * 0.7);
       const y = (height - barHeight) / 2;
-      
+
       // Determine bar color based on state
       if (i === this.clickedBar) {
         // Clicked bar - bright white
@@ -508,7 +546,7 @@ class VoiceNoteElement extends HTMLElement {
         // Unplayed bars - semi-transparent
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
       }
-      
+
       // Draw bars with rounded tops and bottoms, scaled by DPR
       this.drawRoundedBar(x * dpr, y * dpr, barWidth * dpr, barHeight * dpr);
     }

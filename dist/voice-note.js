@@ -17,6 +17,7 @@
       this.clickedBar = null;
       this.speeds = [1, 1.25, 1.5, 2];
       this.currentSpeedIndex = 0;
+      this.resizeObserver = null;
       this.shadow = this.attachShadow({ mode: "open" });
       this.audio = document.createElement("audio");
       this.audio.preload = "metadata";
@@ -110,8 +111,8 @@
         justify-content: center;
         align-items: stretch;
         position: relative;
-        min-width: 120px;
-        max-width: 160px;
+        min-width: 150px;
+        max-width: 200px;
 
       }
 
@@ -256,8 +257,13 @@
       this.canvas.addEventListener("click", (e) => {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
+        const width = rect.width;
         const barWidth = 2;
-        const barGap = 1;
+        const minGap = 1;
+        const maxBars = Math.floor(width / (barWidth + minGap));
+        const targetBars = 80;
+        const barCount = Math.min(maxBars, targetBars);
+        const barGap = barCount > 1 ? (width - barCount * barWidth) / (barCount - 1) : 0;
         const barIndex = Math.floor(x / (barWidth + barGap));
         this.clickedBar = barIndex;
         const percent = x / rect.width;
@@ -267,8 +273,13 @@
       this.canvas.addEventListener("mousemove", (e) => {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
+        const width = rect.width;
         const barWidth = 2;
-        const barGap = 1;
+        const minGap = 1;
+        const maxBars = Math.floor(width / (barWidth + minGap));
+        const targetBars = 80;
+        const barCount = Math.min(maxBars, targetBars);
+        const barGap = barCount > 1 ? (width - barCount * barWidth) / (barCount - 1) : 0;
         const barIndex = Math.floor(x / (barWidth + barGap));
         if (this.hoveredBar !== barIndex) {
           this.hoveredBar = barIndex;
@@ -316,6 +327,10 @@
       this.setupCanvasSize();
       this.ctx = this.canvas.getContext("2d");
       this.drawWaveform();
+      this.resizeObserver = new ResizeObserver(() => {
+        this.setupCanvasSize();
+      });
+      this.resizeObserver.observe(this.canvas);
     }
     setupCanvasSize() {
       requestAnimationFrame(() => {
@@ -396,8 +411,11 @@
       const width = rect.width;
       const height = rect.height;
       const barWidth = 2;
-      const barGap = 1;
-      const barCount = Math.floor(width / (barWidth + barGap));
+      const minGap = 1;
+      const maxBars = Math.floor(width / (barWidth + minGap));
+      const targetBars = 80;
+      const barCount = Math.min(maxBars, targetBars);
+      const barGap = barCount > 1 ? (width - barCount * barWidth) / (barCount - 1) : 0;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (this.peaks.length === 0) {
         for (let i = 0; i < barCount; i++) {
